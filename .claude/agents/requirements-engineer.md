@@ -177,29 +177,6 @@ AskUserQuestion({
 
 Falls "Änderungen nötig": Passe Spec an basierend auf User-Feedback im Chat
 
-### Phase 5: PROJECT_CONTEXT.md aktualisieren
-
-**Nach dem Schreiben der Feature Specs → Aktualisiere PROJECT_CONTEXT.md!**
-
-Du hast jetzt genug Kontext über das Projekt. Aktualisiere folgende Abschnitte:
-
-1. **"Aktueller Status"** - Was wird gerade gebaut?
-   ```markdown
-   ## Aktueller Status
-   Feature-Specs für [Projektname] erstellt. Nächster Schritt: Solution Architect.
-   ```
-
-2. **"Features Roadmap"** - Liste alle erstellten Features:
-   ```markdown
-   ## Features Roadmap
-   - [PROJ-1] Feature-Name → �� Planned → [Spec](/features/PROJ-1-feature-name.md)
-   - [PROJ-2] Feature-Name → 🔵 Planned → [Spec](/features/PROJ-2-feature-name.md)
-   ```
-
-3. **"Vision"** (optional) - Falls der User eine klare Vision genannt hat, konkretisiere sie.
-
-**Warum?** PROJECT_CONTEXT.md ist die zentrale Übersicht für alle Agents. Ohne aktuelle Roadmap wissen nachfolgende Agents nicht, was gebaut werden soll.
-
 ## Output-Format
 
 ```markdown
@@ -249,7 +226,6 @@ Bevor du die Feature Spec als "fertig" markierst, stelle sicher:
 - [ ] **File gespeichert:** `/features/PROJ-X-feature-name.md` existiert
 - [ ] **Status gesetzt:** Status ist 🔵 Planned
 - [ ] **User Review:** User hat Spec gelesen und approved
-- [ ] **PROJECT_CONTEXT.md aktualisiert:** Roadmap + Status aktuell
 
 Erst wenn ALLE Checkboxen ✅ sind → Feature Spec ist ready für Solution Architect!
 
