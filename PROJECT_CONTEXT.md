@@ -1,200 +1,138 @@
-# AI Coding Starter Kit
+# Basewatch V2
 
-> A Next.js template with an AI-powered development workflow using 6 specialized agents
-
-## Vision
-Build web applications faster with AI agents handling Requirements, Architecture, Development, QA, and Deployment. Each agent has clear responsibilities and a human-in-the-loop workflow for quality control.
-
----
-
-## Aktueller Status
-Template ready - Start by defining your first feature!
-
----
-
-## Tech Stack
+## Tech Stack Overview
 
 ### Frontend
 - **Framework:** Next.js 16 (App Router)
-- **Sprache:** TypeScript
+- **Language:** TypeScript (strict mode enabled)
 - **Styling:** Tailwind CSS
-- **UI Library:** shadcn/ui (copy-paste components)
+- **UI Components:** shadcn/ui (Radix UI primitives)
 
 ### Backend
-- **Database:** Supabase (PostgreSQL with Auth)
-- **State Management:** React useState / Context API
-- **Data Fetching:** React Server Components / fetch
+- **Database & Auth:** Supabase (PostgreSQL)
+- **Client Library:** @supabase/supabase-js
+- **Data Fetching:** React Server Components
 
-### Deployment
-- **Hosting:** Vercel (oder Netlify)
-
----
-
-## Features Roadmap
-
-### Your Features Will Appear Here
-
-Start by defining your first feature using the Requirements Engineer agent:
-```
-Read .claude/agents/requirements-engineer.md and create a feature spec for [your feature idea]
-```
-
-Example roadmap structure:
-- [PROJ-1] Your First Feature → 🔵 Planned → [Spec](/features/PROJ-1-feature-name.md)
-- [PROJ-2] Your Second Feature → ⚪ Backlog
-
----
-
-## Status-Legende
-- ⚪ Backlog (noch nicht gestartet)
-- 🔵 Planned (Requirements geschrieben)
-- 🟡 In Review (User reviewt)
-- 🟢 In Development (Wird gebaut)
-- ✅ Done (Live + getestet)
-
----
-
-## Development Workflow
-
-1. **Requirements Engineer** erstellt Feature Spec → User reviewt
-2. **Solution Architect** designed Schema/Architecture → User approved
-3. **PROJECT_CONTEXT.md** Roadmap updaten (Status: 🔵 Planned → 🟢 In Development)
-4. **Frontend + Backend Devs** implementieren → User testet
-5. **QA Engineer** führt Tests aus → Bugs werden gemeldet
-6. **DevOps** deployed → Status: ✅ Done
-
----
-
-## Environment Variables
-
-For projects using Supabase:
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
-
-See `.env.local.example` for full list.
-
----
-
-## Agent-Team Verantwortlichkeiten
-
-- **Requirements Engineer** (`.claude/agents/requirements-engineer.md`)
-  - Feature Specs in `/features` erstellen
-  - User Stories + Acceptance Criteria + Edge Cases
-
-- **Solution Architect** (`.claude/agents/solution-architect.md`)
-  - Database Schema + Component Architecture designen
-  - Tech-Entscheidungen treffen
-
-- **Frontend Developer** (`.claude/agents/frontend-dev.md`)
-  - UI Components bauen (React + Tailwind + shadcn/ui)
-  - Responsive Design + Accessibility
-
-- **Backend Developer** (`.claude/agents/backend-dev.md`)
-  - Supabase Queries + Row Level Security Policies
-  - API Routes + Server-Side Logic
-
-- **QA Engineer** (`.claude/agents/qa-engineer.md`)
-  - Features gegen Acceptance Criteria testen
-  - Bugs dokumentieren + priorisieren
-
-- **DevOps** (`.claude/agents/devops.md`)
-  - Deployment zu Vercel
-  - Environment Variables verwalten
-  - Production-Ready Essentials (Error Tracking, Security Headers, Performance)
-
----
-
-## Production-Ready Features
-
-This template includes production-readiness guides integrated into the agents:
-
-- **Error Tracking:** Sentry setup instructions (DevOps Agent)
-- **Security Headers:** XSS/Clickjacking protection (DevOps Agent)
-- **Performance:** Database indexing, query optimization (Backend Agent)
-- **Input Validation:** Zod schemas for API safety (Backend Agent)
-- **Caching:** Next.js caching strategies (Backend Agent)
-
-All guides are practical and include code examples ready to copy-paste.
-
----
-
-## Design Decisions
-
-Document your architectural decisions here as your project evolves.
-
-**Template:**
-- **Why did we choose X over Y?**
-  → Reason 1
-  → Reason 2
+### Development
+- **Package Manager:** npm
+- **Linting:** ESLint with Next.js config
+- **Build Tool:** Next.js built-in (Turbopack in dev)
 
 ---
 
 ## Folder Structure
 
 ```
-ai-coding-starter-kit/
-├── .claude/
-│   └── agents/              ← 6 AI Agents (Requirements, Architect, Frontend, Backend, QA, DevOps)
-├── features/                ← Feature Specs (Requirements Engineer creates these)
-│   └── README.md            ← Documentation on how to write feature specs
+basewatch_V2/
 ├── src/
-│   ├── app/                 ← Pages (Next.js App Router)
-│   ├── components/          ← React Components
-│   │   └── ui/              ← shadcn/ui components (add as needed)
-│   └── lib/                 ← Utility functions
-│       ├── supabase.ts      ← Supabase client (commented out by default)
-│       └── utils.ts         ← Helper functions
-├── public/                  ← Static files
-├── PROJECT_CONTEXT.md       ← This file - update as project grows
-└── package.json
+│   ├── app/                  # Next.js App Router pages
+│   │   ├── layout.tsx        # Root layout
+│   │   ├── page.tsx          # Home page
+│   │   └── globals.css       # Global styles
+│   ├── components/           # React components
+│   │   └── ui/               # shadcn/ui components
+│   ├── hooks/                # Custom React hooks
+│   └── lib/                  # Utility functions
+│       ├── supabase.ts       # Supabase client setup
+│       └── utils.ts          # Helper functions (cn, etc.)
+├── public/                   # Static assets
+├── features/                 # Feature specifications
+├── .claude/                  # AI agent configurations
+├── tailwind.config.ts        # Tailwind configuration
+├── tsconfig.json             # TypeScript configuration
+├── next.config.ts            # Next.js configuration
+└── package.json              # Dependencies
 ```
+
+---
+
+## Environment Variables
+
+Create a `.env.local` file in the project root with:
+
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+
+# Server-side only (never expose to browser)
+# SUPABASE_SECRET_KEY=your_secret_key
+```
+
+### How to get these values:
+1. Go to [supabase.com](https://supabase.com) and create a project
+2. Navigate to Project Settings > API
+3. Copy the **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+4. Copy the **Publishable Key** → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+See `.env.local.example` for a template.
 
 ---
 
 ## Getting Started
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+```bash
+# Install dependencies
+npm install
 
-2. **Setup Environment Variables (if using Supabase):**
-   ```bash
-   cp .env.local.example .env.local
-   # Add your Supabase credentials
-   ```
+# Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your Supabase credentials
 
-3. **Start development server:**
-   ```bash
-   npm run dev
-   ```
+# Start development server
+npm run dev
 
-4. **Start using the AI Agent workflow:**
-   - Tell Claude to read `.claude/agents/requirements-engineer.md` and define your first feature
-   - Follow the workflow: Requirements → Architecture → Development → QA → Deployment
+# Build for production
+npm run build
 
----
+# Run production build
+npm start
 
-## Next Steps
-
-1. **Define your first feature idea**
-   - Think about what you want to build
-
-2. **Start with Requirements Engineer**
-   - Tell Claude: "Read .claude/agents/requirements-engineer.md and create a feature spec for [your idea]"
-   - The agent will ask clarifying questions and create a detailed spec
-
-3. **Follow the AI Agent workflow**
-   - Requirements → Architecture → Development → QA → Deployment
-   - Each agent knows when to hand off to the next agent
-
-4. **Track progress via Git**
-   - Feature specs in `/features/PROJ-X.md` show status (Planned → In Progress → Deployed)
-   - Git commits track all implementation details
-   - Use `git log --grep="PROJ-X"` to see feature history
+# Run linting
+npm run lint
+```
 
 ---
 
-**Built with AI Agent Team System + Claude Code**
+## Next Steps for Development
+
+1. **Set up Supabase project**
+   - Create a new project at supabase.com
+   - Add credentials to `.env.local`
+
+2. **Define your database schema**
+   - Use Supabase Dashboard or migrations
+   - Set up Row Level Security (RLS) policies
+
+3. **Build your first feature**
+   - Create pages in `src/app/`
+   - Add components in `src/components/`
+   - Use shadcn/ui for consistent UI
+
+4. **Add authentication (optional)**
+   - Supabase Auth is included in the client
+   - Implement sign-up/sign-in flows
+
+5. **Deploy**
+   - Push to GitHub
+   - Connect to Vercel for automatic deployments
+
+---
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm start` | Run production build |
+| `npm run lint` | Run ESLint |
+
+---
+
+## Key Files
+
+- [src/lib/supabase.ts](src/lib/supabase.ts) - Supabase client configuration
+- [src/lib/utils.ts](src/lib/utils.ts) - Utility functions (cn for class merging)
+- [src/app/layout.tsx](src/app/layout.tsx) - Root layout with providers
+- [tailwind.config.ts](tailwind.config.ts) - Tailwind + shadcn/ui theme config

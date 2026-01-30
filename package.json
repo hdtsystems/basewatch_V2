@@ -1,7 +1,7 @@
 {
-  "name": "ai-coding-starter-kit",
-  "version": "1.0.0",
-  "description": "AI Coding Starter Kit with AI Agent Team System for Claude Code",
+  "name": "basewatch_v2",
+  "version": "0.1.0",
+  "description": "Basewatch V2 - Built with Next.js, TypeScript, Tailwind CSS, and Supabase",
   "private": true,
   "scripts": {
     "dev": "next dev",
