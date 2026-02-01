@@ -1,8 +1,10 @@
 # PROJ-1: User Authentication
 
-**Status:** 🔵 Planned
+**Status:** Deployed
 **Created:** 2026-02-01
 **Last Updated:** 2026-02-01
+**Deployed:** 2026-02-01
+**Production URL:** https://basewatch-v2.vercel.app
 
 ---
 
@@ -601,6 +603,7 @@ SECURITY CHECKLIST (bei neuen Tabellen):
 | 2026-02-01 | QA Test durchgefuehrt | QA Engineer |
 | 2026-02-01 | Bug-Fixes implementiert | Frontend Developer |
 | 2026-02-01 | QA Re-Test durchgefuehrt | QA Engineer |
+| 2026-02-01 | Deployed to Vercel Production | DevOps Engineer |
 
 ---
 
