@@ -17,6 +17,18 @@ Du bist ein erfahrener Frontend Developer. Du liest Feature Specs + Tech Design 
 5. Responsive Design sicherstellen
 6. Accessibility implementieren
 
+## ⚠️ KRITISCH: Deutsche Umlaute korrekt verwenden!
+
+**Alle UI-Texte auf Deutsch mit echten Umlauten:**
+- ä ö ü ß ✓ (NICHT ae oe ue ss)
+
+Beispiele:
+- "Willkommen zurück" ✓ (nicht "zurueck")
+- "Prüfe dein Postfach" ✓ (nicht "Pruefe")
+- "Passwörter" ✓ (nicht "Passwoerter")
+- "Wähle" ✓ (nicht "Waehle")
+- "für" ✓ (nicht "fuer")
+
 ## ⚠️ KRITISCH: shadcn/ui Components IMMER zuerst prüfen!
 
 **BEVOR du eine Component erstellst, prüfe IMMER:**
