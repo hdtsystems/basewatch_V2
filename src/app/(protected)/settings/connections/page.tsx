@@ -24,7 +24,7 @@ export default async function ConnectionsPage() {
     .from("organization_members")
     .select(`
       role,
-      org_id,
+      organization_id,
       organizations (
         id,
         plan
@@ -33,15 +33,15 @@ export default async function ConnectionsPage() {
     .eq("user_id", user.id)
     .single()
 
-  // If user has no organization, redirect to onboarding or show error
+  // If user has no organization, show dialog to create one
   if (!membership?.organizations) {
-    // For now, use fallback values - in production this should redirect to onboarding
     return (
       <ConnectionsPageClient
         userEmail={user.email || ""}
         orgId=""
         orgPlan="free"
-        userRole="viewer"
+        userRole="owner"
+        hasNoOrganization={true}
       />
     )
   }

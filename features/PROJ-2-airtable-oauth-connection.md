@@ -1269,3 +1269,328 @@ Die folgenden Bugs wurden erfolgreich behoben:
 ---
 
 *Frontend Developer Instructions - Verifiziert als GEFIXT: 2026-02-03*
+
+---
+
+## Production Testing - Neue Bugs (2026-02-03)
+
+### BUG-8: Falscher Spaltenname in Server Component Query [CRITICAL]
+
+**Severity:** Critical
+**Status:** OFFEN
+**Gefunden:** Production Testing (2026-02-03)
+**Typ:** Backend Bug
+
+**Datei:** `/src/app/(protected)/settings/connections/page.tsx`
+
+**Problem:** Die Supabase-Query verwendet `org_id` aber die Spalte heißt `organization_id`.
+
+**Aktueller Code (Zeile 23-34):**
+```typescript
+const { data: membership } = await supabase
+  .from("organization_members")
+  .select(`
+    role,
+    org_id,  // ❌ FALSCH!
+    organizations (
+      id,
+      plan
+    )
+  `)
+  .eq("user_id", user.id)
+  .single()
+```
+
+**Auswirkung:**
+- Query schlägt fehl (falscher Spaltenname)
+- `membership?.organizations` ist `undefined`
+- Fallback: `userRole="viewer"` (Zeile 44)
+- `canManage = false` → ConnectButton wird nicht angezeigt
+- **User kann KEINE Airtable-Verbindung erstellen!**
+
+**Fix für Backend Developer:**
+```typescript
+const { data: membership } = await supabase
+  .from("organization_members")
+  .select(`
+    role,
+    organization_id,  // ✅ RICHTIG!
+    organizations (
+      id,
+      plan
+    )
+  `)
+  .eq("user_id", user.id)
+  .single()
+```
+
+**Priority:** Critical - Feature ist nicht nutzbar!
+
+---
+
+### BUG-9: Fehlender Onboarding-Flow für neue User [HIGH]
+
+**Severity:** High
+**Status:** OFFEN
+**Gefunden:** Production Testing (2026-02-03)
+**Typ:** Feature Gap (Frontend + Backend)
+
+**Problem:** Wenn ein neuer User sich registriert, gibt es keinen Weg eine Organisation zu erstellen.
+
+**Aktuelles Verhalten:**
+1. Neuer User registriert sich
+2. User landet auf Dashboard
+3. User geht zu `/settings/connections`
+4. Seite zeigt "Nur Admins können Airtable-Accounts verbinden"
+5. Es gibt KEINE Möglichkeit eine Organisation zu erstellen
+6. User ist blockiert
+
+**Erwartetes Verhalten:**
+- Option A: Automatische Org-Erstellung beim ersten Login
+- Option B: Onboarding-Flow der User durch Org-Erstellung führt
+- Option C: "Organisation erstellen"-Button auf der Connections-Seite
+
+**Betroffene Stellen:**
+- `/src/app/(protected)/settings/connections/page.tsx` (Zeile 36-47)
+- Neuer Endpoint: `/api/organizations` POST
+- Neue UI: Onboarding-Wizard oder "Org erstellen"-Dialog
+
+**Temporärer Workaround:**
+Manuell Organisation und Membership in Datenbank einfügen (wie für Jonathan gemacht).
+
+**Empfehlung:**
+Als separates Feature (PROJ-X: User Onboarding) planen.
+
+**Priority:** High - Neue User können das System nicht nutzen!
+
+---
+
+### Zusammenfassung Production Testing
+
+| Bug | Severity | Typ | Status |
+|-----|----------|-----|--------|
+| BUG-8 | Critical | Backend | OFFEN - Query-Fix nötig |
+| BUG-9 | High | Feature Gap | OFFEN - Onboarding fehlt |
+
+**Production-Ready Status: NICHT READY**
+
+BUG-8 muss vor dem produktiven Einsatz gefixt werden!
+
+---
+
+*Production Testing durchgefuehrt: 2026-02-03*
+*Getestet von: Jonathan Handt*
+
+---
+
+## QA Re-Test nach Bug-Fixes (2026-02-03 Nacht)
+
+**Tested:** 2026-02-03 (Nacht - Nach BUG-8 und BUG-9 Fixes)
+**Tested by:** QA Engineer (Claude)
+**Test-Methode:** Statische Code-Analyse + Datenbank-Schema-Verifizierung
+
+---
+
+### Bug-Verifikation
+
+#### BUG-8: Falscher Spaltenname `org_id` statt `organization_id` [CRITICAL]
+
+**Status:** GEFIXT
+
+**Verifizierung:**
+
+Datei: `/src/app/(protected)/settings/connections/page.tsx`
+
+**Aktueller Code (Zeile 23-34):**
+```typescript
+const { data: membership } = await supabase
+  .from("organization_members")
+  .select(`
+    role,
+    organization_id,  // KORREKT!
+    organizations (
+      id,
+      plan
+    )
+  `)
+  .eq("user_id", user.id)
+  .single()
+```
+
+**Datenbank-Schema Bestaetigung:**
+- Tabelle `organization_members` hat Spalte `organization_id` (UUID)
+- Spalte `org_id` existiert NICHT in der Tabelle
+
+**Git Diff Bestaetigt:**
+```diff
+-      org_id,
++      organization_id,
+```
+
+**Ergebnis:** BUG-8 ist vollstaendig gefixt.
+
+---
+
+#### BUG-9: Fehlender Onboarding-Flow fuer neue User [HIGH]
+
+**Status:** GEFIXT
+
+**Verifizierung:**
+
+**1. Server Component (page.tsx):**
+- Zeile 36-47: Wenn `!membership?.organizations`, wird `hasNoOrganization={true}` uebergeben
+- `userRole="owner"` wird gesetzt (statt vorher `"viewer"`)
+- Ermoeglicht dem User, den CreateOrganizationDialog zu nutzen
+
+**2. Client Component (connections-page-client.tsx):**
+- Zeile 12: `CreateOrganizationDialog` wird importiert
+- Zeile 28: `hasNoOrganization?: boolean` als optionale Prop definiert
+- Zeile 36: Default-Wert `hasNoOrganization = false`
+- Zeile 42: State `showCreateOrgDialog` wird auf `hasNoOrganization` initialisiert
+- Zeile 221-225: Dialog wird gerendert wenn `showCreateOrgDialog=true`
+
+**3. CreateOrganizationDialog (/src/components/organization/create-organization-dialog.tsx):**
+- Vollstaendig implementiert (126 Zeilen)
+- Formular mit Organisations-Name Input
+- Validierung: Mindestens 2 Zeichen
+- API-Call zu `POST /api/organizations`
+- Erfolgs-Toast und Seiten-Refresh nach Erstellung
+- Loading-State waehrend API-Call
+
+**4. API Endpoint (/src/app/api/organizations/route.ts):**
+- `POST /api/organizations`: Erstellt neue Organisation
+- Validierung via Zod Schema
+- Prueft ob User bereits Mitglied einer Org ist
+- Generiert Slug aus Name
+- Erstellt Organisation mit Plan "free"
+- Hinweis: DB-Trigger `create_owner_membership` fuegt User automatisch als Owner hinzu
+
+**Git Diff Bestaetigt:**
+```diff
++import { CreateOrganizationDialog } from "@/components/organization/create-organization-dialog"
+...
++  hasNoOrganization?: boolean
+...
++  const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(hasNoOrganization)
+...
++      {/* Create Organization Dialog - shown when user has no organization */}
++      <CreateOrganizationDialog
++        open={showCreateOrgDialog}
++        onOpenChange={setShowCreateOrgDialog}
++      />
+```
+
+**Ergebnis:** BUG-9 ist vollstaendig gefixt.
+
+---
+
+### Code-Qualitaet
+
+#### TypeScript Compilation
+- **Status:** KEINE FEHLER
+- `npx tsc --noEmit` laeuft erfolgreich durch
+
+#### Neue Dateien verifiziert
+| Datei | Status | Zeilen |
+|-------|--------|--------|
+| `/src/components/organization/create-organization-dialog.tsx` | Existiert | 126 |
+| `/src/app/api/organizations/route.ts` | Existiert | 170 |
+
+#### Code-Review Findings
+
+**create-organization-dialog.tsx:**
+- Deutsche UI-Texte (mit korrekten Umlauten in der Anzeige)
+- Proper Error Handling mit State
+- Loading State mit Spinner
+- Formular-Validierung (min 2 Zeichen)
+- `router.refresh()` nach Erfolg - laedt Server Component neu
+
+**organizations/route.ts:**
+- Zod-Validierung fuer Request Body
+- Auth-Check vorhanden
+- Prueft existierende Membership (verhindert Mehrfach-Orgs)
+- Slug-Generierung mit Umlaut-Ersetzung
+- Fehlerbehandlung fuer Unique Constraint Violation
+- GET Endpoint auch implementiert (fuer zukuenftige Nutzung)
+
+---
+
+### Potenzielle Issues (Keine kritischen Bugs)
+
+#### Issue 1: Dialog kann nicht geschlossen werden wenn `hasNoOrganization=true`
+- **Severity:** Low
+- **Beschreibung:** Wenn der User keine Organisation hat, wird der Dialog automatisch geoeffnet. User kann ihn schliessen (`onOpenChange`), aber dann sieht er eine Seite ohne Moeglichkeit eine Org zu erstellen.
+- **Empfehlung:** UI zeigt "Organisation erstellen" Button auch ausserhalb des Dialogs (oder Dialog ist modal ohne Schliessen-Option)
+- **Nicht blockierend:** User kann Dialog wieder oeffnen durch Page Refresh
+
+#### Issue 2: Keine Pruefung ob DB-Trigger existiert
+- **Severity:** Medium
+- **Beschreibung:** Der API-Code verlaesst sich auf den DB-Trigger `create_owner_membership`, der den User automatisch als Owner hinzufuegt. Wenn dieser Trigger fehlt, wird die Org erstellt aber User hat keinen Zugriff.
+- **Empfehlung:** Entweder Trigger-Existenz verifizieren oder Membership manuell im API-Code erstellen (nach INSERT)
+- **Nicht blockierend:** Trigger wurde in frueherer Migration erstellt
+
+---
+
+### Aktualisierte Bug-Tabelle
+
+| Bug | Severity | Status | Verifiziert |
+|-----|----------|--------|-------------|
+| BUG-1 | Critical | GEFIXT | 2026-02-03 (Abend) |
+| BUG-2 | High | GEFIXT | 2026-02-03 (Abend) |
+| BUG-3 | Medium | OFFEN (By Design) | - |
+| BUG-4 | Low | OFFEN | - |
+| BUG-5 | Medium | OFFEN (Separates Feature) | - |
+| BUG-6 | Medium | OFFEN (Separates Feature) | - |
+| BUG-7 | - | GESCHLOSSEN (War falsch dokumentiert) | 2026-02-03 (Abend) |
+| **BUG-8** | **Critical** | **GEFIXT** | **2026-02-03 (Nacht)** |
+| **BUG-9** | **High** | **GEFIXT** | **2026-02-03 (Nacht)** |
+
+---
+
+### Summary
+
+| Kategorie | Status |
+|-----------|--------|
+| Critical Bugs | 0 offen |
+| High Bugs | 0 offen |
+| Medium Bugs | 3 offen (alle By Design oder separates Feature) |
+| Low Bugs | 1 offen |
+| TypeScript Errors | 0 |
+| Neue Komponenten | 2 (verifiziert) |
+| API Endpoints | 1 neuer (POST /api/organizations) |
+
+---
+
+### Production-Ready Status: READY
+
+**Alle kritischen und hohen Bugs wurden gefixt:**
+
+- BUG-8 (Critical): `organization_id` statt `org_id` - GEFIXT
+- BUG-9 (High): Onboarding-Flow mit CreateOrganizationDialog - GEFIXT
+
+**Offene Punkte (nicht blockierend):**
+- Email-Benachrichtigungen bei Token-Widerruf (separates Feature)
+- Retry-Mechanismus fuer Sync-Fehler (separates Feature)
+- Leaked Password Protection (allgemeine Best Practice)
+
+---
+
+### Empfehlung: DEPLOY
+
+Das Feature ist jetzt funktionsfaehig fuer Production:
+
+1. Neue User koennen eine Organisation erstellen
+2. Bestehende User mit Organisation koennen Airtable verbinden
+3. Query verwendet korrekten Spaltennamen `organization_id`
+4. TypeScript kompiliert ohne Fehler
+
+**Vor Final-Deployment noch ausfuehren:**
+- [ ] Manueller End-to-End Test mit echtem Airtable-Account
+- [ ] Airtable OAuth Credentials in Production setzen
+- [ ] Code committen und deployen
+
+---
+
+*QA Re-Test durchgefuehrt: 2026-02-03 (Nacht)*
+*QA Engineer: Claude*
+*Vorherige Tests: 2026-02-03 (Morgen, Nachmittag, Abend)*

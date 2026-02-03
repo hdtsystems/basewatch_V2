@@ -9,6 +9,7 @@ import {
   ErrorBanner,
   PlanLimitBanner,
 } from "@/components/airtable"
+import { CreateOrganizationDialog } from "@/components/organization/create-organization-dialog"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import type {
@@ -24,6 +25,7 @@ interface ConnectionsPageClientProps {
   orgId: string
   orgPlan: PlanType
   userRole: OrgRole
+  hasNoOrganization?: boolean
 }
 
 export function ConnectionsPageClient({
@@ -31,11 +33,13 @@ export function ConnectionsPageClient({
   orgId,
   orgPlan,
   userRole,
+  hasNoOrganization = false,
 }: ConnectionsPageClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [connections, setConnections] = useState<AirtableConnection[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showCreateOrgDialog, setShowCreateOrgDialog] = useState(hasNoOrganization)
 
   const canManage = userRole === "owner" || userRole === "admin"
   const limit = PLAN_LIMITS[orgPlan]
@@ -213,6 +217,12 @@ export function ConnectionsPageClient({
           </p>
         )}
       </main>
+
+      {/* Create Organization Dialog - shown when user has no organization */}
+      <CreateOrganizationDialog
+        open={showCreateOrgDialog}
+        onOpenChange={setShowCreateOrgDialog}
+      />
     </div>
   )
 }
