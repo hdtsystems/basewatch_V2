@@ -1,0 +1,11 @@
+# Environment files - NEVER deploy these
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store

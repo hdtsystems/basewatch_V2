@@ -159,6 +159,57 @@ export type Database = {
           },
         ]
       }
+      monitored_bases: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          airtable_base_id: string
+          created_at: string | null
+          deactivated_at: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          airtable_base_id: string
+          created_at?: string | null
+          deactivated_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          airtable_base_id?: string
+          created_at?: string | null
+          deactivated_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitored_bases_airtable_base_id_fkey"
+            columns: ["airtable_base_id"]
+            isOneToOne: false
+            referencedRelation: "airtable_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitored_bases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oauth_states: {
         Row: {
           code_verifier: string
@@ -190,6 +241,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "oauth_states_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          declined_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          organization_id: string
+          role: string
+          token: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          declined_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          organization_id: string
+          role?: string
+          token?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          declined_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          organization_id?: string
+          role?: string
+          token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invitations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -235,29 +333,79 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string | null
+          description: string | null
           id: string
+          logo_url: string | null
           name: string
           plan: string
           slug: string
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           plan?: string
           slug: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           plan?: string
           slug?: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
+      }
+      user_onboarding_status: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          current_step: number | null
+          id: string
+          organization_id: string | null
+          skipped_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          organization_id?: string | null
+          skipped_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          organization_id?: string | null
+          skipped_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_onboarding_status_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -265,6 +413,8 @@ export type Database = {
     }
     Functions: {
       can_create_connection: { Args: { org_id: string }; Returns: boolean }
+      can_invite_member: { Args: { org_id: string }; Returns: boolean }
+      can_monitor_base: { Args: { org_id: string }; Returns: boolean }
       cleanup_expired_oauth_states: { Args: never; Returns: number }
       delete_connection_tokens: {
         Args: { p_connection_id: string }
@@ -275,6 +425,7 @@ export type Database = {
         Returns: boolean
       }
       get_connection_limit: { Args: { plan_type: string }; Returns: number }
+      get_plan_limits: { Args: { plan_type: string }; Returns: Json }
       get_token_from_vault: { Args: { p_secret_id: string }; Returns: string }
       store_token_in_vault: {
         Args: { p_connection_id: string; p_token: string; p_token_type: string }
@@ -410,16 +561,25 @@ export type CompositeTypes<
 // Convenience types for tables
 export type Organization = Tables<"organizations">
 export type OrganizationMember = Tables<"organization_members">
+export type OrganizationInvitation = Tables<"organization_invitations">
 export type AirtableConnection = Tables<"airtable_connections">
 export type AirtableWorkspace = Tables<"airtable_workspaces">
 export type AirtableBase = Tables<"airtable_bases">
 export type OAuthState = Tables<"oauth_states">
+export type UserOnboardingStatus = Tables<"user_onboarding_status">
+export type MonitoredBase = Tables<"monitored_bases">
 
 // Role type
 export type MemberRole = "owner" | "admin" | "member" | "viewer"
+
+// Invitation role type (owner cannot be invited)
+export type InvitationRole = "admin" | "member" | "viewer"
 
 // Plan type
 export type OrganizationPlan = "free" | "pro" | "enterprise"
 
 // Connection status type
 export type ConnectionStatus = "active" | "disconnected" | "pending_sync" | "error"
+
+// Onboarding step type
+export type OnboardingStep = 1 | 2 | 3 | 4
