@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { TeamSettingsClient } from "./team-settings-client"
 import type { PlanType, OrgRole } from "@/types/airtable"
 
@@ -44,23 +45,18 @@ export default async function TeamSettingsPage() {
     plan: PlanType
   }
 
-  // Get all members with user details
+  // Get all members (without user join - we'll fetch user data separately)
   const { data: members } = await supabase
     .from("organization_members")
     .select(`
       user_id,
       role,
-      joined_at,
-      users:user_id (
-        id,
-        email,
-        raw_user_meta_data
-      )
+      joined_at
     `)
     .eq("organization_id", org.id)
     .order("joined_at", { ascending: true })
 
-  // Get pending invitations
+  // Get pending invitations (without user join for inviter)
   const { data: invitations } = await supabase
     .from("organization_invitations")
     .select(`
@@ -69,29 +65,52 @@ export default async function TeamSettingsPage() {
       role,
       expires_at,
       created_at,
-      invited_by,
-      inviter:invited_by (
-        email,
-        raw_user_meta_data
-      )
+      invited_by
     `)
     .eq("organization_id", org.id)
     .is("accepted_at", null)
     .order("created_at", { ascending: false })
 
+  // Fetch user data from auth.users using admin client
+  const adminClient = createAdminClient()
+
+  // Collect all user IDs we need to fetch (members + inviters)
+  const memberUserIds = (members || []).map((m) => m.user_id)
+  const inviterUserIds = (invitations || [])
+    .map((inv) => inv.invited_by)
+    .filter((id): id is string => id !== null)
+  const allUserIds = [...new Set([...memberUserIds, ...inviterUserIds])]
+
+  // Fetch all users at once using admin API
+  let userMap: Map<string, { email: string; full_name?: string; avatar_url?: string }> = new Map()
+
+  if (allUserIds.length > 0) {
+    const { data: authUsers } = await adminClient.auth.admin.listUsers({
+      perPage: 1000,
+    })
+
+    if (authUsers?.users) {
+      for (const authUser of authUsers.users) {
+        if (allUserIds.includes(authUser.id)) {
+          userMap.set(authUser.id, {
+            email: authUser.email || "",
+            full_name: authUser.user_metadata?.full_name,
+            avatar_url: authUser.user_metadata?.avatar_url,
+          })
+        }
+      }
+    }
+  }
+
   // Transform members data
   const transformedMembers = (members || []).map((m) => {
-    const userData = m.users as unknown as {
-      id: string
-      email: string
-      raw_user_meta_data: { full_name?: string; avatar_url?: string } | null
-    } | null
+    const userData = userMap.get(m.user_id)
 
     return {
       userId: m.user_id,
       email: userData?.email || "",
-      fullName: userData?.raw_user_meta_data?.full_name || null,
-      avatarUrl: userData?.raw_user_meta_data?.avatar_url || null,
+      fullName: userData?.full_name || null,
+      avatarUrl: userData?.avatar_url || null,
       role: m.role as OrgRole,
       joinedAt: m.joined_at,
     }
@@ -99,10 +118,7 @@ export default async function TeamSettingsPage() {
 
   // Transform invitations data
   const transformedInvitations = (invitations || []).map((inv) => {
-    const inviterData = inv.inviter as unknown as {
-      email: string
-      raw_user_meta_data: { full_name?: string } | null
-    } | null
+    const inviterData = inv.invited_by ? userMap.get(inv.invited_by) : null
 
     return {
       id: inv.id,
@@ -110,7 +126,7 @@ export default async function TeamSettingsPage() {
       role: inv.role as OrgRole,
       expiresAt: inv.expires_at,
       createdAt: inv.created_at,
-      invitedBy: inviterData?.raw_user_meta_data?.full_name || inviterData?.email || "",
+      invitedBy: inviterData?.full_name || inviterData?.email || "",
     }
   })
 

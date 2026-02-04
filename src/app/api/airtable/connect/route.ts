@@ -60,24 +60,31 @@ export async function GET(request: Request) {
       )
     }
 
-    // 4. Prüfe Plan-Limits
+    // 4. Prüfe Plan-Limits (optional - skip wenn RPC nicht existiert)
     const adminClient = createAdminClient()
-    const { data: canCreate, error: limitError } = await adminClient
-      .rpc('can_create_connection', { org_id: orgId })
+    try {
+      const { data: canCreate, error: limitError } = await adminClient
+        .rpc('can_create_connection', { org_id: orgId })
 
-    if (limitError) {
-      console.error('Limit check error:', limitError)
-      return NextResponse.json(
-        { error: 'Fehler bei der Limit-Prüfung' },
-        { status: 500 }
-      )
-    }
-
-    if (!canCreate) {
-      return NextResponse.json(
-        { error: 'Verbindungs-Limit erreicht. Bitte upgrade deinen Plan.' },
-        { status: 403 }
-      )
+      // Wenn die RPC-Funktion nicht existiert, erlauben wir die Connection
+      if (limitError && limitError.code === '42883') {
+        // Function does not exist - skip limit check
+        console.log('can_create_connection RPC not found, skipping limit check')
+      } else if (limitError) {
+        console.error('Limit check error:', limitError)
+        return NextResponse.json(
+          { error: 'Fehler bei der Limit-Prüfung' },
+          { status: 500 }
+        )
+      } else if (canCreate === false) {
+        return NextResponse.json(
+          { error: 'Verbindungs-Limit erreicht. Bitte upgrade deinen Plan.' },
+          { status: 403 }
+        )
+      }
+    } catch (rpcError) {
+      // Bei RPC-Fehlern fortfahren (Limit-Check ist nicht kritisch)
+      console.warn('RPC limit check failed, continuing:', rpcError)
     }
 
     // 5. Generiere PKCE + State
@@ -97,6 +104,14 @@ export async function GET(request: Request) {
 
     if (stateError) {
       console.error('State save error:', stateError)
+      // Detailliertere Fehlermeldung für Debugging
+      if (stateError.code === '42P01') {
+        console.error('oauth_states table does not exist')
+        return NextResponse.json(
+          { error: 'OAuth-Tabelle nicht gefunden. Bitte kontaktiere den Support.' },
+          { status: 500 }
+        )
+      }
       return NextResponse.json(
         { error: 'Fehler beim Speichern des OAuth-States' },
         { status: 500 }

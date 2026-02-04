@@ -170,7 +170,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
         </CardHeader>
         <CardContent>
           <Button variant="outline" asChild>
-            <a href="/auth/reset-password">
+            <a href="/forgot-password">
               Passwort ändern
             </a>
           </Button>
