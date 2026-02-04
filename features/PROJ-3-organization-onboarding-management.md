@@ -1,6 +1,8 @@
 # PROJ-3: Organization Onboarding & Management
 
-## Status: Draft
+## Status: ✅ Deployed (2026-02-04)
+
+**Production URL:** https://basewatch-v2.vercel.app
 
 ## Abhängigkeiten
 - Benötigt: PROJ-1 (User Authentication) - ✅ Deployed
