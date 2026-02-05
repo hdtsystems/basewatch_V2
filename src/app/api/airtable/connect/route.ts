@@ -61,7 +61,16 @@ export async function GET(request: Request) {
     }
 
     // 4. Prüfe Plan-Limits (optional - skip wenn RPC nicht existiert)
-    const adminClient = createAdminClient()
+    let adminClient
+    try {
+      adminClient = createAdminClient()
+    } catch (adminError) {
+      console.error('Admin client creation failed:', adminError)
+      return NextResponse.json(
+        { error: 'Server-Konfiguration fehlerhaft (Admin). Bitte kontaktiere den Support.' },
+        { status: 500 }
+      )
+    }
     try {
       const { data: canCreate, error: limitError } = await adminClient
         .rpc('can_create_connection', { org_id: orgId })
@@ -142,6 +151,19 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('OAuth connect error:', error)
+
+    // Bessere Fehlerbehandlung für Debugging
+    if (error instanceof Error) {
+      if (error.message.includes('Missing Supabase environment')) {
+        return NextResponse.json(
+          { error: 'Server-Konfiguration fehlerhaft. Bitte kontaktiere den Support.' },
+          { status: 500 }
+        )
+      }
+      // Log den genauen Fehler für Debugging
+      console.error('Error details:', error.message)
+    }
+
     return NextResponse.json(
       { error: 'Interner Serverfehler' },
       { status: 500 }
