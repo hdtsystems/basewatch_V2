@@ -5,12 +5,13 @@ const AIRTABLE_OAUTH_URL = 'https://airtable.com/oauth2/v1/authorize'
 const AIRTABLE_TOKEN_URL = 'https://airtable.com/oauth2/v1/token'
 const AIRTABLE_API_URL = 'https://api.airtable.com/v0'
 
-// OAuth Scopes - minimal erforderlich
+// OAuth Scopes - müssen mit Airtable Developer Hub übereinstimmen
+// WICHTIG: Diese Scopes müssen in Airtable aktiviert sein!
 export const AIRTABLE_SCOPES = [
   'data.records:read',
-  'data.recordComments:read',
+  'data.records:write',
   'schema.bases:read',
-  'user.email:read',
+  'schema.bases:write',
 ] as const
 
 /**
@@ -143,11 +144,12 @@ export async function refreshAccessToken(params: {
  */
 export interface AirtableUserInfo {
   id: string
-  email: string
+  email?: string  // Optional - nur verfügbar wenn user.email:read Scope aktiviert
 }
 
 /**
  * Holt User Info von Airtable API
+ * Hinweis: email ist nur verfügbar wenn user.email:read Scope aktiviert ist
  */
 export async function getAirtableUserInfo(accessToken: string): Promise<AirtableUserInfo> {
   const response = await fetch(`${AIRTABLE_API_URL}/meta/whoami`, {
@@ -161,7 +163,11 @@ export async function getAirtableUserInfo(accessToken: string): Promise<Airtable
     throw new Error(`Failed to get user info: ${error}`)
   }
 
-  return response.json()
+  const data = await response.json()
+  return {
+    id: data.id,
+    email: data.email,  // Kann undefined sein wenn Scope fehlt
+  }
 }
 
 /**

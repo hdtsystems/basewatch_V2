@@ -137,13 +137,14 @@ export async function GET(request: Request) {
     }
 
     // 7. Neue Connection erstellen
+    // Hinweis: airtable_email kann null sein wenn user.email:read Scope nicht aktiviert ist
     const { data: newConnection, error: insertError } = await adminClient
       .from('airtable_connections')
       .insert({
         organization_id: oauthState.organization_id,
         connected_by: oauthState.user_id,
         airtable_user_id: userInfo.id,
-        airtable_email: userInfo.email,
+        airtable_email: userInfo.email || null,
         token_expires_at: tokenExpiresAt.toISOString(),
         scopes: AIRTABLE_SCOPES,
         status: 'pending_sync',
